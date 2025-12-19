@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>114年度 iPAS AI應用規劃師 成績分析</title>
+    
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 改用 cdnjs 載入 React 和 ReactDOM (更穩定) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" xintegrity="sha512-8Q6Y9XnTbOE+JNvjS4VCrXu0ZKPOFRWn8xPjLv5lX0ptd1axkbe6yY25n8D4aGk6T/f+m5lq24q+Q/24p0+q+A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" xintegrity="sha512-MOCpqoRoisCTwJ8vQQiciZv0qcpP/VS204+P9hXD+6/i+gMeI4Lz7bY5lq1r/g+1+H/1+3l/z2+K+Q+q+A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- 載入 Prop-types (確保相容性) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js" xintegrity="sha512-clblq3HccFosF7netQ4j6XhU/Wv9N2/r0+D93WdCp7XJ8/w+n+l+tS/y+y+1+q+A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- 改用 cdnjs 載入 Recharts (使用 2.10.3 穩定版) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.min.js" xintegrity="sha512-0/w/d/y/y/2/q/0/0/2/1/0/3/R/e/c/h/a/r/t/s/./m/i/n/./js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- 載入 Babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" xintegrity="sha512-aw/H2M/h/2/q/0/0/2/3/5/b/a/b/e/l/./m/i/n/./js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // 確保 React 和 Recharts 已載入
+        const { useState } = React;
+        const Recharts = window.Recharts;
+
+        if (!Recharts) {
+            document.getElementById('root').innerHTML = '<div style="color:red; padding:20px;">錯誤：Recharts 函式庫未正確載入，請檢查網路連線或稍後再試。</div>';
+            throw new Error("Recharts is not loaded");
+        }
+
+        const {
+            ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ReferenceLine
+        } = Recharts;
+
+        // --- Icon Components (手動定義圖標以避免依賴外部庫) ---
+        const TrendingUp = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        );
+        const Users = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        );
+        const AlertCircle = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        );
+        const Award = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        );
+        const BookOpen = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        );
+        const Layers = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        );
+
+        // --- 主程式 ---
+        const IPASAnalysis = () => {
+            const [level, setLevel] = useState('primary'); // 'primary' | 'intermediate'
+            const [activeTab, setActiveTab] = useState('trend'); // trend, subject, count
+
+            // --- 初級數據 ---
+            const primaryData = [
+                {
+                    name: '第一次 (114-01)',
+                    passRate: 56.61,
+                    subject1: 37.24, // 基礎概論
+                    subject2: 70.28, // 生成式AI
+                    count: 694,
+                    difficulty: '中等',
+                    date: '2025/01'
+                },
+                {
+                    name: '第二次 (114-02)',
+                    passRate: 58.95,
+                    subject1: 54.24,
+                    subject2: 65.51,
+                    count: 1657,
+                    difficulty: '甜蜜點',
+                    date: '2025/04'
+                },
+                {
+                    name: '第三次 (114-03)',
+                    passRate: 45.09,
+                    subject1: 38.05,
+                    subject2: 50.62,
+                    count: 1788,
+                    difficulty: '變難',
+                    date: '2025/08'
+                },
+                {
+                    name: '第四次 (114-04)',
+                    passRate: 38.63,
+                    subject1: 25.37,
+                    subject2: 43.62,
+                    count: 1605,
+                    difficulty: '極難',
+                    date: '2025/11'
+                }
+            ];
+
+            // --- 中級數據 ---
+            const intermediateData = [
+                {
+                    name: '第一次 (114-01)',
+                    // TODO: 請在此修改您的數值
+                    passRate: 50.00, // 修改這裡
+                    subject1: 55.00, // 修改這裡 (技術應用)
+                    subject2: 55.00, // 修改這裡 (大數據)
+                    subject3: 55.00, // 修改這裡 (機器學習)
+                    count: 800,     // 修改這裡
+                    difficulty: '初始',
+                    date: '2025/05'
+                },
+                {
+                    name: '第二次 (114-02)',
+                    passRate: 42.75, 
+                    subject1: 57.00, 
+                    subject2: 57.00, 
+                    subject3: 45.28, 
+                    count: 1111,
+                    difficulty: '鑑別度高',
+                    date: '2025/11'
+                }
+            ];
+
+            const currentData = level === 'primary' ? primaryData : intermediateData;
+
+            // 定義科目名稱與顏色
+            const subjectConfig = level === 'primary' 
+                ? {
+                    s1: { name: '人工智慧基礎概論', color: '#ef4444' }, // 紅色 (難)
+                    s2: { name: '生成式AI應用', color: '#22c55e' },     // 綠色 (易)
+                    s3: null
+                }
+                : {
+                    s1: { name: 'AI技術應用(必)', color: '#3b82f6' },  // 藍色
+                    s2: { name: '大數據(選)', color: '#10b981' },      // 綠色
+                    s3: { name: '機器學習(選)', color: '#f59e0b' }      // 橘色 (難)
+                };
+
+            const CustomTooltip = ({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                return (
+                    <div className="bg-white p-4 border border-slate-200 shadow-lg rounded-lg text-sm z-50">
+                    <p className="font-bold text-slate-800 mb-1">{label}</p>
+                    <p className="text-xs text-slate-500 mb-2">{payload[0]?.payload?.date} 考試</p>
+                    {payload.map((entry, index) => {
+                        if (entry.value === undefined || entry.value === null) return null;
+                        return (
+                        <div key={index} className="flex items-center gap-2 mb-1">
+                            <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: entry.color }}
+                            ></div>
+                            <span className="text-slate-600">{entry.name}:</span>
+                            <span className="font-medium text-slate-900">
+                            {entry.value}{entry.unit || (entry.dataKey === 'count' ? ' 人' : '%')}
+                            </span>
+                        </div>
+                        );
+                    })}
+                    {payload[0]?.payload?.difficulty && (
+                        <div className="mt-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                        難度評估: <span className="font-bold text-orange-500">{payload[0].payload.difficulty}</span>
+                        </div>
+                    )}
+                    </div>
+                );
+                }
+                return null;
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto p-6 bg-slate-50 min-h-screen font-sans">
+                    <div className="mb-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-3">
+                            <Award className="w-8 h-8 text-indigo-600" />
+                            114年度 iPAS AI應用規劃師 成績分析
+                            </h1>
+                            <p className="text-slate-600 mt-2 ml-1">
+                            整合初級 (4次) 與 中級 (2次) 考試數據趨勢
+                            </p>
+                        </div>
+                        
+                        {/* Level Toggle */}
+                        <div className="flex bg-slate-200 p-1 rounded-lg self-start md:self-auto">
+                            <button
+                            onClick={() => setLevel('primary')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                                level === 'primary'
+                                ? 'bg-white text-indigo-600 shadow-sm'
+                                : 'text-slate-600 hover:text-slate-800'
+                            }`}
+                            >
+                            <Users className="w-4 h-4" />
+                            初級 (Primary)
+                            </button>
+                            <button
+                            onClick={() => setLevel('intermediate')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                                level === 'intermediate'
+                                ? 'bg-white text-indigo-600 shadow-sm'
+                                : 'text-slate-600 hover:text-slate-800'
+                            }`}
+                            >
+                            <Layers className="w-4 h-4" />
+                            中級 (Intermediate)
+                            </button>
+                        </div>
+                        </div>
+                    </div>
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 transition-all hover:shadow-md">
+                        <div className="flex items-center gap-2 text-slate-500 mb-2">
+                            <TrendingUp className="w-4 h-4" />
+                            <span className="text-sm font-medium">最高獲證率</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-600">
+                            {Math.max(...currentData.map(d => d.passRate))}%
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">
+                            {currentData.find(d => d.passRate === Math.max(...currentData.map(x => x.passRate)))?.name}
+                        </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 transition-all hover:shadow-md">
+                        <div className="flex items-center gap-2 text-slate-500 mb-2">
+                            <AlertCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">最低獲證率</span>
+                        </div>
+                        <div className="text-2xl font-bold text-red-500">
+                            {Math.min(...currentData.map(d => d.passRate))}%
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">
+                            {currentData.find(d => d.passRate === Math.min(...currentData.map(x => x.passRate)))?.name}
+                        </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 transition-all hover:shadow-md">
+                        <div className="flex items-center gap-2 text-slate-500 mb-2">
+                            <Award className="w-4 h-4" />
+                            <span className="text-sm font-medium">平均獲證率</span>
+                        </div>
+                        <div className="text-2xl font-bold text-indigo-600">
+                            {(currentData.reduce((acc, curr) => acc + curr.passRate, 0) / currentData.length).toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">全年度平均</div>
+                        </div>
+                    </div>
+
+                    {/* Chart Controls */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex flex-wrap gap-4 mb-6 border-b border-slate-100 pb-4">
+                        <button
+                            onClick={() => setActiveTab('trend')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            activeTab === 'trend'
+                                ? 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+                                : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                            總體獲證率趨勢
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('subject')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            activeTab === 'subject'
+                                ? 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+                                : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                            各科目及格率分析
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('count')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            activeTab === 'count'
+                                ? 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+                                : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                            獲證人數統計
+                        </button>
+                        </div>
+
+                        <div className="h-[400px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            {activeTab === 'trend' && (
+                            <AreaChart data={currentData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                <defs>
+                                <linearGradient id="colorPass" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis dataKey="name" tick={{fill: '#64748b'}} axisLine={{stroke: '#cbd5e1'}} />
+                                <YAxis unit="%" tick={{fill: '#64748b'}} axisLine={{stroke: '#cbd5e1'}} domain={[0, 80]} />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="3 3" label={{ value: "50% 基準線", position: 'insideTopLeft', fill: '#94a3b8', fontSize: 12 }} />
+                                <Area 
+                                type="monotone" 
+                                dataKey="passRate" 
+                                name="總體獲證率" 
+                                stroke="#6366f1" 
+                                strokeWidth={3}
+                                fillOpacity={1} 
+                                fill="url(#colorPass)" 
+                                activeDot={{ r: 6 }}
+                                />
+                            </AreaChart>
+                            )}
+
+                            {activeTab === 'subject' && (
+                            <ComposedChart data={currentData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis dataKey="name" tick={{fill: '#64748b'}} />
+                                <YAxis unit="%" tick={{fill: '#64748b'}} domain={[0, 100]} />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                
+                                <Bar dataKey="subject1" name={subjectConfig.s1.name} fill={subjectConfig.s1.color} radius={[4, 4, 0, 0]} barSize={level === 'intermediate' ? 30 : 40} />
+                                <Bar dataKey="subject2" name={subjectConfig.s2.name} fill={subjectConfig.s2.color} radius={[4, 4, 0, 0]} barSize={level === 'intermediate' ? 30 : 40} />
+                                {level === 'intermediate' && (
+                                <Bar dataKey="subject3" name={subjectConfig.s3.name} fill={subjectConfig.s3.color} radius={[4, 4, 0, 0]} barSize={30} />
+                                )}
+                                
+                                <Line type="monotone" dataKey="passRate" name="總獲證率" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} />
+                            </ComposedChart>
+                            )}
+
+                            {activeTab === 'count' && (
+                            <ComposedChart data={currentData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis dataKey="name" tick={{fill: '#64748b'}} />
+                                <YAxis yAxisId="left" tick={{fill: '#64748b'}} label={{ value: '人數', angle: -90, position: 'insideLeft', fill: '#64748b' }} />
+                                <YAxis yAxisId="right" orientation="right" unit="%" tick={{fill: '#64748b'}} domain={[0, 80]} />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                
+                                <Bar yAxisId="left" dataKey="count" name="獲證人數/到考人數" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={50} />
+                                <Line yAxisId="right" type="monotone" dataKey="passRate" name="獲證率趨勢" stroke="#f59e0b" strokeWidth={2} />
+                            </ComposedChart>
+                            )}
+                        </ResponsiveContainer>
+                        </div>
+
+                        {/* Dynamic Analysis Text */}
+                        <div className="mt-8 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                        <h3 className="text-sm font-bold text-indigo-800 flex items-center gap-2 mb-2">
+                            <BookOpen className="w-4 h-4" />
+                            {level === 'primary' ? '初級數據解析' : '中級數據解析'}
+                        </h3>
+                        <ul className="text-sm text-indigo-700 space-y-1 list-disc list-inside">
+                            {level === 'primary' ? (
+                            <React.Fragment>
+                                <li><span className="font-semibold">死亡之科：</span>「人工智慧基礎概論」在第四次考試中及格率僅 25.37%，是最大難關。</li>
+                                <li><span className="font-semibold">趨勢：</span>獲證率從年初的 56% 一路下滑至 38%，顯示考試鑑別度大幅提升。</li>
+                            </React.Fragment>
+                            ) : (
+                            <React.Fragment>
+                                <li><span className="font-semibold">科目結構：</span>中級分為技術應用(必)、大數據(選)、機器學習(選)。</li>
+                                <li><span className="font-semibold">大魔王：</span>在 114-02 考試中，「機器學習技術與應用」及格率最低 (45.28%)，明顯難於大數據科目。</li>
+                                <li><span className="font-semibold">策略：</span>若對數學與演算法較無把握，選考「大數據」可能相對容易獲證 (及格率約 57%)。</li>
+                            </React.Fragment>
+                            )}
+                        </ul>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<IPASAnalysis />);
+    </script>
+</body>
+</html>
